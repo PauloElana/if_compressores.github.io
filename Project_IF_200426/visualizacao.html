@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IF Compressores — Ficha Técnica</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .ficha-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .ficha-item {
+    background: var(--dark3);
+    padding: 14px;
+    border-radius: 8px;
+    border-left: 3px solid var(--red);
+  }
+  .ficha-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gray-mid);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .ficha-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  /* Manutenções na visualização */
+  .manut-mini {
+    background: var(--dark3);
+    border: 1px solid var(--gray);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .manut-mini:hover { border-color: var(--red); }
+
+  .manut-mini-header {
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--gray);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .manut-mini-body {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .manut-mini-foto {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-height: 280px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--gray);
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .manut-mini-foto:hover { opacity: 0.85; }
+
+  .mini-field { display: flex; flex-direction: column; gap: 3px; }
+  .mini-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-mid); font-weight: 600; }
+  .mini-value { font-size: 14px; color: var(--white2); line-height: 1.4; }
+  .mini-value.destaque {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--red-light);
+  }
+
+  .mini-descricao {
+    grid-column: 1 / -1;
+    background: var(--dark2);
+    border-radius: 6px;
+    padding: 12px;
+    border-left: 3px solid var(--red);
+  }
+
+  /* Modal foto */
+  .foto-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.93);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .foto-modal.open { display: flex; }
+  .foto-modal img { max-width: 100%; max-height: 90vh; border-radius: 10px; }
+  .foto-modal-close {
+    position: absolute; top: 20px; right: 24px;
+    font-size: 36px; color: #fff; cursor: pointer; opacity: 0.7; line-height: 1;
+  }
+  .foto-modal-close:hover { opacity: 1; }
+
+  @media (max-width: 600px) {
+    .ficha-grid, .manut-mini-body { grid-template-columns: 1fr; }
+  }
+  @media print {
+    .btn-actions, header .nav-actions { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="dashboard.html">
+      <div class="logo-icon"><img src="logo.png" alt="IF Compressores"></div>
+      <div class="logo-text">
+        <span class="logo-name">IF Compressores</span>
+        <span class="logo-sub">Sistema de Gestão</span>
+      </div>
+    </a>
+    <span class="header-title">Ficha Técnica</span>
+    <div class="nav-actions">
+      <button class="btn-nav" onclick="window.print()">🖨️ <span>Imprimir</span></button>
+      <a class="btn-nav home" href="dashboard.html">🏠 <span>Início</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- Modal foto -->
+<div class="foto-modal" id="fotoModal" onclick="fecharModal()">
+  <span class="foto-modal-close">✕</span>
+  <img id="fotoModalImg" src="" alt="Foto manutenção">
+</div>
+
+<div class="container">
+
+  <div id="loading" class="loading">⏳ Carregando equipamento...</div>
+
+  <div id="conteudo" style="display:none;">
+
+    <div class="page-title">Ficha <span>Técnica</span></div>
+    <div class="page-subtitle" id="subtitulo">—</div>
+
+    <!-- Identificação -->
+    <div class="card">
+      <div class="card-title">Identificação do Equipamento</div>
+      <div class="ficha-grid" id="ficha-dados"></div>
+    </div>
+
+    <!-- Especificações -->
+    <div class="card">
+      <div class="card-title">Especificações Técnicas</div>
+      <div class="ficha-grid" id="ficha-specs"></div>
+    </div>
+
+    <!-- Ações -->
+    <div class="btn-actions" style="margin-bottom:24px;">
+      <a class="btn btn-primary" id="btn-manutencao" href="#">🔧 Registrar Manutenção</a>
+      <a class="btn btn-secondary" id="btn-historico" href="#">📋 Ver Histórico Completo</a>
+    </div>
+
+    <!-- Histórico com fotos -->
+    <div class="card">
+      <div class="card-title">Últimas Manutenções</div>
+      <div id="historico-lista">
+        <div class="loading">Carregando...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="nao-encontrado" style="display:none;" class="empty-state">
+    <div class="empty-state-icon">⚠️</div>
+    <div class="empty-state-text">Equipamento não encontrado</div>
+    <a href="dashboard.html" class="btn btn-primary" style="margin-top:20px;width:auto;padding:12px 24px;">← Voltar ao Início</a>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+
+const id = new URLSearchParams(window.location.search).get("id");
+
+function abrirModal(url) {
+  document.getElementById('fotoModalImg').src = url;
+  document.getElementById('fotoModal').classList.add('open');
+}
+function fecharModal() {
+  document.getElementById('fotoModal').classList.remove('open');
+}
+
+function fichaItem(label, value) {
+  return `<div class="ficha-item">
+    <div class="ficha-label">${label}</div>
+    <div class="ficha-value">${value || '—'}</div>
+  </div>`;
+}
+
+function formatarData(str) {
+  if (!str) return '—';
+  return new Date(str).toLocaleString('pt-BR', {
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+}
+
+async function carregar() {
+  if (!id) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('nao-encontrado').style.display = 'block';
+    return;
+  }
+
+  const { data, error } = await window.db
+    .from("if-compressores")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  document.getElementById('loading').style.display = 'none';
+
+  if (!data) {
+    document.getElementById('nao-encontrado').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('conteudo').style.display = 'block';
+  document.getElementById('subtitulo').textContent =
+    `${data.marca || ''} ${data.modelo || ''} — ${data.cliente || ''}`;
+
+  document.getElementById('ficha-dados').innerHTML =
+    fichaItem('ID', data.id) +
+    fichaItem('Tipo', data.tipo) +
+    fichaItem('Marca', data.marca) +
+    fichaItem('Modelo', data.modelo) +
+    fichaItem('Nº de Série', data.serie) +
+    fichaItem('Cliente', data.cliente) +
+    fichaItem('Cidade', data.cidade) +
+    fichaItem('Horímetro Atual', data.horimetro ? data.horimetro + ' h' : '—');
+
+  document.getElementById('ficha-specs').innerHTML =
+    fichaItem('Potência', data.potencia) +
+    fichaItem('Pressão', data.pressao) +
+    fichaItem('Vazão', data.vazao) +
+    fichaItem('Tensão', data.tensao);
+
+  document.getElementById('btn-manutencao').href = `manutencao.html?id=${id}`;
+  document.getElementById('btn-historico').href = `historico.html?id=${id}`;
+
+  carregarHistorico();
+}
+
+async function carregarHistorico() {
+  const lista = document.getElementById('historico-lista');
+
+  const { data, error } = await window.db
+    .from("if-manutencoes")
+    .select("*")
+    .eq("compressor_id", id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (error || !data || data.length === 0) {
+    lista.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon" style="font-size:32px;">📋</div>
+        <div class="empty-state-text">Nenhuma manutenção registrada</div>
+      </div>`;
+    return;
+  }
+
+  lista.innerHTML = data.map(m => {
+    const fotoHtml = m.foto_url
+      ? `<img class="manut-mini-foto" src="${m.foto_url}" alt="Foto" onclick="abrirModal('${m.foto_url}')" title="Clique para ampliar">`
+      : `<div style="grid-column:1/-1;background:var(--dark2);border-radius:8px;padding:14px;text-align:center;color:var(--gray-mid);font-size:12px;border:1px dashed var(--gray);">📷 Sem foto</div>`;
+
+    const tipoHtml = m.tipo_servico
+      ? `<span class="badge badge-red">${m.tipo_servico}</span>` : '';
+
+    return `
+    <div class="manut-mini">
+      <div class="manut-mini-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;">
+            🔧 ${m.tipo_servico || 'Manutenção'}
+          </span>
+          ${tipoHtml ? '' : ''}
+        </div>
+        <span style="font-size:12px;color:var(--gray-mid);">📅 ${formatarData(m.created_at)}</span>
+      </div>
+      <div class="manut-mini-body">
+
+        ${fotoHtml}
+
+        <div class="mini-field">
+          <div class="mini-label">⏱️ Horímetro</div>
+          <div class="mini-value destaque">${m.horimetro ?? '—'} h</div>
+        </div>
+
+        <div class="mini-field">
+          <div class="mini-label">📅 Data</div>
+          <div class="mini-value">${formatarData(m.data_manutencao || m.created_at)}</div>
+        </div>
+
+        <div class="mini-descricao">
+          <div class="mini-label" style="margin-bottom:5px;">📝 Descrição</div>
+          <div class="mini-value">${m.descricao || '—'}</div>
+        </div>
+
+        ${m.pecas_substituidas ? `
+        <div class="mini-descricao" style="border-left-color:var(--warning);">
+          <div class="mini-label" style="margin-bottom:5px;">🔩 Peças</div>
+          <div class="mini-value">${m.pecas_substituidas}</div>
+        </div>` : ''}
+
+      </div>
+    </div>`;
+  }).join('');
+}
+
+carregar();
+</script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IF Compressores — Painel</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="dashboard.html">
+      <div class="logo-icon"><img src="logo.png" alt="IF Compressores" style="width:200px;height:300px;object-fit:contain;border-radius:6px;"></div>
+      <div class="logo-text" style="display:none;">
+        <span class="logo-name">IF Compressores</span>
+        <span class="logo-sub">Sistema de Gestão</span>
+      </div>
+    </a>
+    <span class="header-title">Painel Técnico</span>
+    <div class="nav-actions">
+      <button class="btn-nav" onclick="logout()">🚪 <span>Sair</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="page-title">Painel <span>Técnico</span></div>
+  <div class="page-subtitle" id="user-email">Carregando...</div>
+
+  <!-- ESTATÍSTICAS -->
+  <div class="dashboard-stats">
+    <div class="stat-card">
+      <div class="stat-icon">🖥️</div>
+      <div class="stat-label">Total de Equipamentos</div>
+      <div class="stat-value" id="stat-equipamentos">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🔧</div>
+      <div class="stat-label">Manutenções Registradas</div>
+      <div class="stat-value" id="stat-manutencoes">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-label">Pendentes de Manutenção</div>
+      <div class="stat-value" id="stat-pendentes">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-label">Manutenções Hoje</div>
+      <div class="stat-value" id="stat-hoje">-</div>
+    </div>
+  </div>
+
+  <!-- AÇÕES RÁPIDAS -->
+  <div class="card">
+    <div class="card-title">⚡ Ações Rápidas</div>
+    <div class="menu-grid">
+      <a class="menu-card" href="index.html">
+        <span class="menu-card-icon">🖥️</span>
+        <div class="menu-card-title">Cadastrar Equipamento</div>
+        <div class="menu-card-desc">Registrar novo compressor</div>
+      </a>
+      <a class="menu-card" href="equipamentos.html">
+        <span class="menu-card-icon">📦</span>
+        <div class="menu-card-title">Ver Equipamentos</div>
+        <div class="menu-card-desc">Lista completa com filtros</div>
+      </a>
+      <a class="menu-card" href="manutencao.html">
+        <span class="menu-card-icon">🔧</span>
+        <div class="menu-card-title">Registrar Manutenção</div>
+        <div class="menu-card-desc">Inserir serviço realizado</div>
+      </a>
+      <a class="menu-card" href="historico.html">
+        <span class="menu-card-icon">📋</span>
+        <div class="menu-card-title">Histórico</div>
+        <div class="menu-card-desc">Ver manutenções anteriores</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- STATUS DOS COMPRESSORES -->
+  <div class="card">
+    <div class="card-title">🔴 Status dos Compressores</div>
+    <div id="equipamentos-list" style="margin-top: 16px;">
+      <div class="loading">Carregando equipamentos...</div>
+    </div>
+  </div>
+
+  <!-- ÚLTIMAS MANUTENÇÕES -->
+  <div class="card">
+    <div class="card-title">📜 Últimas Manutenções</div>
+    <div id="manutencoes-list" style="margin-top: 16px;">
+      <div class="loading">Carregando histórico...</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="fotos.js"></script>
+<script src="supabase.js"></script>
+<script>
+
+async function verificar() {
+  const { data } = await window.db.auth.getSession();
+  if (!data.session) return (window.location.href = "login.html");
+  document.getElementById('user-email').textContent = '👤 ' + data.session.user.email;
+  
+  await carregarDados();
+}
+
+async function carregarDados() {
+  try {
+    // Carregar equipamentos
+    const { data: equipamentos, error: eqError } = await window.db
+      .from("if-compressores")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (equipamentos && equipamentos.length > 0) {
+      document.getElementById('stat-equipamentos').textContent = equipamentos.length;
+      renderizarEquipamentos(equipamentos);
+    } else {
+      document.getElementById('stat-equipamentos').textContent = '0';
+      document.getElementById('equipamentos-list').innerHTML = '<div class="empty-state"><div class="empty-state-icon">🚫</div><div class="empty-state-text">Nenhum equipamento cadastrado</div></div>';
+    }
+
+    // Carregar manutenções
+    const { data: manutencoes, error: mnError } = await window.db
+      .from("if-manutencoes")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (manutencoes && manutencoes.length > 0) {
+      document.getElementById('stat-manutencoes').textContent = manutencoes.length;
+      renderizarManutencoes(manutencoes);
+    } else {
+      document.getElementById('stat-manutencoes').textContent = '0';
+      document.getElementById('manutencoes-list').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">Nenhuma manutenção registrada</div></div>';
+    }
+
+    // Calcular estatísticas
+    const hoje = new Date().toISOString().split('T')[0];
+    const manutencoeHoje = manutencoes ? manutencoes.filter(m => m.created_at?.startsWith(hoje)).length : 0;
+    document.getElementById('stat-hoje').textContent = manutencoeHoje;
+
+    // Pendentes (equipamentos com horímetro > 2000 sem manutenção recente)
+    const pendentes = equipamentos ? equipamentos.filter(e => e.horimetro > 2000).length : 0;
+    document.getElementById('stat-pendentes').textContent = pendentes;
+
+  } catch (error) {
+    console.error("Erro ao carregar dados:", error);
+  }
+}
+
+function renderizarEquipamentos(equipamentos) {
+  const container = document.getElementById('equipamentos-list');
+  container.innerHTML = '';
+
+  equipamentos.slice(0, 10).forEach(eq => {
+    const status = eq.horimetro > 2500 ? '🔴 Crítico' : eq.horimetro > 2000 ? '🟡 Atenção' : '🟢 OK';
+    const card = document.createElement('div');
+    card.className = 'equipment-card';
+    card.innerHTML = `
+      <div class="equipment-image">
+        ${eq.foto_capa_url ? `<img src="${eq.foto_capa_url}" alt="${eq.serie}">` : '<div style="background: var(--dark3); display: flex; align-items: center; justify-content: center; height: 100%; color: var(--gray-mid);">📷</div>'}
+      </div>
+      <div class="equipment-info">
+        <div class="equipment-info-title">${eq.marca} ${eq.modelo}</div>
+        <div class="equipment-info-meta">
+          <span>📍 <strong>Série:</strong> ${eq.serie}</span>
+          <span>⏱️ <strong>Horímetro:</strong> ${eq.horimetro} h</span>
+          <span>${status}</span>
+        </div>
+        <div style="margin-top: 10px;">
+          <a href="historico.html?id=${eq.id}" style="color: var(--red-light); text-decoration: none; font-size: 12px; text-transform: uppercase; font-weight: 600;">
+            → Ver Histórico
+          </a>
+          <span style="margin: 0 8px; color: var(--gray);">|</span>
+          <a href="manutencao.html?id=${eq.id}" style="color: var(--red-light); text-decoration: none; font-size: 12px; text-transform: uppercase; font-weight: 600;">
+            → Registrar Manutenção
+          </a>
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderizarManutencoes(manutencoes) {
+  const container = document.getElementById('manutencoes-list');
+  container.innerHTML = '';
+
+  manutencoes.slice(0, 5).forEach(m => {
+    const data = new Date(m.created_at).toLocaleDateString('pt-BR');
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `
+      <div class="history-header">
+        <div class="history-date">${m.compressor_id}</div>
+        <span class="badge badge-green">${m.tipo_servico || 'Serviço'}</span>
+      </div>
+      <div class="history-desc">${m.descricao.substring(0, 80)}...</div>
+      <div class="history-meta">
+        <span>📅 ${data}</span>
+        <span>⏱️ ${m.horimetro} h</span>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+async function logout() {
+  await window.db.auth.signOut();
+  window.location.href = "login.html";
+}
+
+verificar();
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IF Compressores — Login</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon"><img src="logo.png" alt="IF Compressores"></div>
+      
+      <div class="login-logo-sub" style="margin-top:4px;">Sistema de Gestão</div>
+    </div>
+    <div class="login-form">
+      <div class="form-group">
+        <label>E-mail</label>
+        <input id="email" type="email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input id="senha" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" onclick="login()" style="margin-top:8px;">
+        🔐 <span>Entrar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="login.js"></script>
+
+<script>
+// Verifica se já está logado
+(async () => {
+  const { data } = await window.db.auth.getSession();
+  if (data.session) window.location.href = "dashboard.html";
+})();
+
+// Enter para login
+document.getElementById('senha').addEventListener('keypress', e => {
+  if (e.key === 'Enter') login();
+});
+</script>
+
+</body>
+</html>

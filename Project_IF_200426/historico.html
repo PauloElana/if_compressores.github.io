@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IF Compressores — Histórico de Manutenções</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .manut-card {
+    background: var(--dark2);
+    border: 1px solid var(--dark3);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .manut-card:hover { border-color: var(--red); }
+
+  .manut-header {
+    background: var(--dark3);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-bottom: 1px solid var(--gray);
+  }
+
+  .manut-id {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 1px;
+  }
+
+  .manut-data {
+    font-size: 12px;
+    color: var(--gray-mid);
+    letter-spacing: 0.5px;
+  }
+
+  .manut-body {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .manut-foto-wrap {
+    grid-column: 1 / -1;
+  }
+
+  .manut-foto {
+    width: 100%;
+    max-height: 340px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--gray);
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .manut-foto:hover { opacity: 0.85; }
+
+  .manut-field { display: flex; flex-direction: column; gap: 4px; }
+  .manut-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gray-mid);
+    font-weight: 600;
+  }
+  .manut-value {
+    font-size: 14px;
+    color: var(--white2);
+    line-height: 1.5;
+  }
+  .manut-value.big {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--red-light);
+  }
+
+  .manut-descricao {
+    grid-column: 1 / -1;
+    background: var(--dark3);
+    border-radius: 8px;
+    padding: 14px;
+    border-left: 3px solid var(--red);
+  }
+
+  /* Modal foto */
+  .foto-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .foto-modal.open { display: flex; }
+  .foto-modal img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 10px;
+    box-shadow: 0 0 60px rgba(196,0,0,0.3);
+  }
+  .foto-modal-close {
+    position: absolute;
+    top: 20px; right: 24px;
+    font-size: 32px;
+    color: #fff;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0.7;
+  }
+  .foto-modal-close:hover { opacity: 1; }
+
+  @media (max-width: 600px) {
+    .manut-body { 
+      grid-template-columns: 1fr; 
+      gap: 12px;
+      padding: 16px;
+    }
+    
+    .manut-header {
+      padding: 12px 16px;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .manut-id {
+      font-size: 15px;
+    }
+    
+    .manut-foto {
+      max-height: 200px;
+    }
+    
+    .manut-value.big {
+      font-size: 18px;
+    }
+    
+    .manut-foto-wrap {
+      grid-column: 1;
+    }
+    
+    .fotos-gallery {
+      grid-template-columns: 1fr 1fr !important;
+    }
+  }
+  
+  /* Galeria de fotos */
+  .fotos-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+  
+  .foto-gallery-item {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--gray);
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  
+  .foto-gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .foto-gallery-item:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="dashboard.html">
+      <div class="logo-icon"><img src="logo.png" alt="IF Compressores"></div>
+      <div class="logo-text">
+        <span class="logo-name">IF Compressores</span>
+        <span class="logo-sub">Sistema de Gestão</span>
+      </div>
+    </a>
+    <span class="header-title">Histórico</span>
+    <div class="nav-actions">
+      <a class="btn-nav home" href="dashboard.html">🏠 <span>Início</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- Modal de foto em tela cheia -->
+<div class="foto-modal" id="fotoModal" onclick="fecharModal()">
+  <span class="foto-modal-close">✕</span>
+  <img id="fotoModalImg" src="" alt="Foto manutenção">
+</div>
+
+<div class="container">
+  <div class="page-title">Histórico de <span>Manutenções</span></div>
+  <div class="page-subtitle">Todos os registros de serviços realizados</div>
+
+  <!-- Filtro -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="form-group">
+      <label>Filtrar por ID do Compressor</label>
+      <div style="display:flex;gap:10px;">
+        <input type="text" id="filtro_id" placeholder="Ex: 001, SRP-042, SC2024-001" style="margin:0;">
+        <button class="btn btn-primary" onclick="buscar()" style="width:auto;padding:11px 20px;margin:0;">🔍</button>
+        <button class="btn btn-ghost" onclick="limparFiltro()" style="width:auto;padding:11px 16px;margin:0;">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="lista">
+    <div class="loading">⏳ Carregando histórico...</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="fotos.js"></script>
+<script src="supabase.js"></script>
+<script>
+
+(async () => {
+  const { data } = await window.db.auth.getSession();
+  if (!data.session) window.location.href = "login.html";
+})();
+
+function abrirModal(url) {
+  document.getElementById('fotoModalImg').src = url;
+  document.getElementById('fotoModal').classList.add('open');
+}
+function fecharModal() {
+  document.getElementById('fotoModal').classList.remove('open');
+  document.getElementById('fotoModalImg').src = '';
+}
+
+function formatarData(str) {
+  if (!str) return '—';
+  return new Date(str).toLocaleString('pt-BR', {
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
+}
+
+async function carregarHistorico(filtroId = null) {
+  const lista = document.getElementById('lista');
+  lista.innerHTML = '<div class="loading">⏳ Carregando...</div>';
+
+  let query = window.db
+    .from("if-manutencoes")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (filtroId) query = query.eq("compressor_id", filtroId);
+
+  const { data, error } = await query.limit(100);
+
+  if (error) {
+    lista.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Erro: ${error.message}</div></div>`;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    lista.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhuma manutenção registrada</div></div>`;
+    return;
+  }
+
+  lista.innerHTML = data.map(m => {
+    // Suportar tanto foto_url (antiga) quanto cover_photo_url e fotos_urls (nova)
+    let fotoCapaHtml = '';
+    if (m.cover_photo_url) {
+      fotoCapaHtml = `<div class="manut-foto-wrap">
+           <div class="manut-label" style="margin-bottom:8px;">🖼️ Foto de Capa</div>
+           <img class="manut-foto" src="${m.cover_photo_url}" alt="Capa" onclick="abrirModal('${m.cover_photo_url}')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%232a2a2a%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2216%22%3EImagem não encontrada%3C/text%3E%3C/svg%3E'">
+         </div>`;
+    }
+    
+    let fotosGaleriaHtml = '';
+    if (m.fotos_urls) {
+      try {
+        const fotos = typeof m.fotos_urls === 'string' ? JSON.parse(m.fotos_urls) : m.fotos_urls;
+        if (Array.isArray(fotos) && fotos.length > 0) {
+          fotosGaleriaHtml = `<div class="manut-foto-wrap">
+             <div class="manut-label" style="margin-bottom:8px;">📸 Galeria da Manutenção (${fotos.length})</div>
+             <div class="fotos-gallery">
+               ${fotos.map((foto, idx) => `
+                 <div class="foto-gallery-item" onclick="abrirModal('${foto}')">
+                   <img src="${foto}" alt="Foto ${idx + 1}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%232a2a2a%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2210%22%3E?%3C/text%3E%3C/svg%3E'">
+                 </div>
+               `).join('')}
+             </div>
+           </div>`;
+        }
+      } catch (e) {
+        console.warn('Erro ao parsear fotos_urls:', e);
+      }
+    }
+    
+    // Compatibilidade com foto_url antiga
+    let fotoUnicaHtml = '';
+    if (m.foto_url && !fotoCapaHtml && !fotosGaleriaHtml) {
+      fotoUnicaHtml = `<div class="manut-foto-wrap">
+           <div class="manut-label" style="margin-bottom:8px;">📸 Foto da Manutenção</div>
+           <img class="manut-foto" src="${m.foto_url}" alt="Foto" onclick="abrirModal('${m.foto_url}')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%232a2a2a%22 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2216%22%3EImagem não encontrada%3C/text%3E%3C/svg%3E'">
+         </div>`;
+    }
+    
+    const todasAsFotos = fotoCapaHtml + fotosGaleriaHtml + fotoUnicaHtml;
+    const fotoHtml = todasAsFotos || `<div class="manut-foto-wrap">
+           <div style="background:var(--dark3);border-radius:8px;padding:20px;text-align:center;color:var(--gray-mid);font-size:13px;border:1px dashed var(--gray);">
+             📷 Sem fotos registradas
+           </div>
+         </div>`;
+
+    const tipoHtml = m.tipo_servico
+      ? `<span class="badge badge-red">${m.tipo_servico}</span>`
+      : '<span class="badge" style="background:var(--dark3);color:var(--gray-mid);border:1px solid var(--gray);">Sem tipo</span>';
+
+    const dataManut = m.data_manutencao
+      ? formatarData(m.data_manutencao)
+      : formatarData(m.created_at);
+
+    return `
+    <div class="manut-card">
+      <div class="manut-header">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div class="manut-id">🔧 ${m.compressor_id || '—'}</div>
+          ${tipoHtml}
+        </div>
+        <div class="manut-data">📅 ${formatarData(m.created_at)}</div>
+      </div>
+
+      <div class="manut-body">
+
+        ${fotoHtml}
+
+        <div class="manut-field">
+          <div class="manut-label">⏱️ Horímetro</div>
+          <div class="manut-value big">${m.horimetro ?? '—'} h</div>
+        </div>
+
+        <div class="manut-field">
+          <div class="manut-label">📅 Data da Manutenção</div>
+          <div class="manut-value">${dataManut}</div>
+        </div>
+
+        <div class="manut-descricao" style="grid-column:1/-1;">
+          <div class="manut-label" style="margin-bottom:6px;">📝 Descrição do Serviço</div>
+          <div class="manut-value">${m.descricao || '—'}</div>
+        </div>
+
+        ${m.pecas_substituidas ? `
+        <div class="manut-descricao" style="grid-column:1/-1;border-left-color:var(--warning);">
+          <div class="manut-label" style="margin-bottom:6px;">🔩 Peças Substituídas</div>
+          <div class="manut-value">${m.pecas_substituidas}</div>
+        </div>` : ''}
+
+        ${m.tecnico_id ? `
+        <div class="manut-field">
+          <div class="manut-label">👷 Técnico ID</div>
+          <div class="manut-value" style="font-size:11px;word-break:break-all;">${m.tecnico_id}</div>
+        </div>` : ''}
+
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buscar() {
+  const id = document.getElementById('filtro_id').value.trim();
+  carregarHistorico(id || null);
+}
+
+function limparFiltro() {
+  document.getElementById('filtro_id').value = '';
+  carregarHistorico();
+}
+
+const urlParams = new URLSearchParams(window.location.search);
+const idParam = urlParams.get('id');
+if (idParam) {
+  document.getElementById('filtro_id').value = idParam;
+  carregarHistorico(idParam);
+} else {
+  carregarHistorico();
+}
+
+document.getElementById('filtro_id').addEventListener('keypress', e => {
+  if (e.key === 'Enter') buscar();
+});
+</script>
+</body>
+</html>
