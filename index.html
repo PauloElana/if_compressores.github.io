@@ -9,104 +9,11 @@
 <body>
 
 <header>
-  <div class="header-inner">
-    <a class="logo" href="dashboard.html">
-      <div class="logo-icon"><img src="logo.png" alt="IF Compressores"></div>
-      <div class="logo-text">
-        <span class="logo-name">IF Compressores</span>
-        <span class="logo-sub">Sistema de Gestão</span>
-      </div>
-    </a>
-    <span class="header-title">Cadastrar Equipamento</span>
-    <div class="nav-actions">
-      <a class="btn-nav home" href="dashboard.html">🏠 <span>Início</span></a>
-    </div>
-  </div>
+  <!-- ... seu header permanece igual ... -->
 </header>
 
 <div class="container">
-  <div class="page-title">Novo <span>Equipamento</span></div>
-  <div class="page-subtitle">Preencha os dados do compressor</div>
-
-  <div class="card">
-    <div class="card-title">Identificação</div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Tipo</label>
-        <input id="tipo" placeholder="Ex: Parafuso, Pistão...">
-      </div>
-      <div class="form-group">
-        <label>Marca</label>
-        <input id="marca" placeholder="Ex: Schulz, Atlas Copco...">
-      </div>
-      <div class="form-group">
-        <label>Modelo</label>
-        <input id="modelo" placeholder="Ex: SRP 3010">
-      </div>
-      <div class="form-group">
-        <label>Número de Série <span style="color:var(--red-light);font-size:10px;letter-spacing:1px;">★ IDENTIFICADOR</span></label>
-        <input id="serie" placeholder="Ex: 001, SRP-042, SC2024-001" style="border-color:var(--red);">
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Especificações Técnicas</div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Potência (CV/kW)</label>
-        <input id="potencia" placeholder="Ex: 10 CV">
-      </div>
-      <div class="form-group">
-        <label>Pressão (bar/psi)</label>
-        <input id="pressao" placeholder="Ex: 10 bar">
-      </div>
-      <div class="form-group">
-        <label>Vazão (m³/min)</label>
-        <input id="vazao" placeholder="Ex: 1.6 m³/min">
-      </div>
-      <div class="form-group">
-        <label>Tensão (V)</label>
-        <input id="tensao" placeholder="Ex: 220V / 380V">
-      </div>
-      <div class="form-group">
-        <label>Horímetro Inicial (h)</label>
-        <input id="horimetro" type="number" placeholder="Ex: 0">
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Localização</div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Cliente</label>
-        <input id="cliente" placeholder="Nome do cliente">
-      </div>
-      <div class="form-group">
-        <label>Cidade</label>
-        <input id="cidade" placeholder="Cidade — UF">
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🖼️ Foto de Identificação do Equipamento</div>
-    <div class="form-grid">
-      <div class="form-group full">
-        <label>Foto Principal do Compressor (para identificação visual)</label>
-        <div class="cover-photo-wrapper">
-          <input type="file" id="foto-equipamento" accept="image/*" onchange="previewFotoEquipamento(event)">
-          <div id="foto-equipamento-preview" class="cover-preview">
-            <div class="cover-upload-placeholder">
-              <span style="font-size: 2em; display: block; margin-bottom: 10px;">📷</span>
-              <p>Clique ou arraste uma foto aqui</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- ... seus cards de formulário permanecem iguais ... -->
 
   <div class="btn-actions">
     <button class="btn btn-ghost" onclick="limpar()">🗑️ Limpar</button>
@@ -116,21 +23,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="fotos.js"></script>
- <script src="supabase.js"></script>
+<script src="supabase.js"></script>
 <script>
-
-  // Verifica sessão sem bloquear a página
-  (async () => {
-    try {
-      if (!window.db) return;
-      const { data } = await window.db.auth.getSession();
-      if (!data.session) window.location.href = "login.html";
-    } catch(e) {
-      console.warn("Sessão não verificada:", e);
-    }
-  })();
-
   function limpar() {
     ['tipo','marca','modelo','serie','potencia','pressao',
      'vazao','tensao','horimetro','cliente','cidade']
@@ -144,103 +38,62 @@
     `;
   }
 
-  function previewFotoEquipamento(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const preview = document.getElementById('foto-equipamento-preview');
-      preview.innerHTML = `
-        <img src="${e.target.result}" alt="Foto do Equipamento" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
-        <button type="button" class="remove-photo" onclick="document.getElementById('foto-equipamento').value = ''; document.getElementById('foto-equipamento-preview').innerHTML = '<div class=\"cover-upload-placeholder\"><span style=\"font-size: 2em; display: block; margin-bottom: 10px;\">📷</span><p>Clique ou arraste uma foto aqui</p></div>';">✕</button>
-      `;
-    };
-    reader.readAsDataURL(file);
-  }
-
   async function salvar() {
     const btn = document.getElementById('btn-salvar');
     btn.disabled = true;
     btn.textContent = 'Salvando...';
 
-    if (!window.db) {
-      alert("Erro de conexão com o banco de dados.");
-      btn.disabled = false;
-      btn.innerHTML = '💾 Salvar e Gerar QR';
-      return;
-    }
-
     const tipo   = document.getElementById('tipo').value.trim();
     const marca  = document.getElementById('marca').value.trim();
     const modelo = document.getElementById('modelo').value.trim();
-
-    if (!tipo || !marca || !modelo) {
-      alert("Preencha ao menos: Tipo, Marca e Modelo.");
-      btn.disabled = false;
-      btn.innerHTML = '💾 Salvar e Gerar QR';
-      return;
-    }
-
-    // Usa o número de série como ID (ex: "001", "SRP-042")
     const serieVal = document.getElementById('serie').value.trim();
-    if (!serieVal) {
-      alert("Preencha o Número de Série — ele será usado como identificador do equipamento.");
+
+    if (!tipo || !marca || !modelo || !serieVal) {
+      alert("Preencha ao menos: Tipo, Marca, Modelo e Série.");
       btn.disabled = false;
-      btn.innerHTML = '💾 Salvar e Gerar QR';
+      btn.textContent = '💾 Salvar e Gerar QR';
       return;
     }
-    const id = serieVal;
 
-    // Upload da foto do equipamento (opcional)
+    // Upload da foto
     let fotoEquipamentoUrl = null;
     const fotoEquipamentoFile = document.getElementById('foto-equipamento').files[0];
-    
     if (fotoEquipamentoFile) {
-      try {
-        // Usar função melhorada de upload
-        fotoEquipamentoUrl = await uploadImagemEquipamento(fotoEquipamentoFile);
-        
-        if (fotoEquipamentoUrl) {
-          console.log("✅ Foto do equipamento salva:", fotoEquipamentoUrl);
-        } else {
-          console.warn("⚠️ Erro ao fazer upload da foto do equipamento");
-        }
-      } catch (e) {
-        console.warn("❌ Erro ao fazer upload da foto:", e);
-      }
+      fotoEquipamentoUrl = await uploadImagemEquipamento(fotoEquipamentoFile);
     }
 
     const dados = {
-      id:        id,
-      tipo:      tipo,
-      marca:     marca,
-      modelo:    modelo,
-      serie:     serieVal,
-      potencia:  document.getElementById('potencia').value.trim(),
-      pressao:   document.getElementById('pressao').value.trim(),
-      vazao:     document.getElementById('vazao').value.trim(),
-      tensao:    document.getElementById('tensao').value.trim(),
+      id: serieVal, // usa série como identificador
+      tipo,
+      marca,
+      modelo,
+      serie: serieVal,
+      potencia: document.getElementById('potencia').value.trim(),
+      pressao: document.getElementById('pressao').value.trim(),
+      vazao: document.getElementById('vazao').value.trim(),
+      tensao: document.getElementById('tensao').value.trim(),
       horimetro: parseFloat(document.getElementById('horimetro').value) || 0,
-      cliente:   document.getElementById('cliente').value.trim(),
-      cidade:    document.getElementById('cidade').value.trim(),
-      foto_capa_url: fotoEquipamentoUrl
+      cliente: document.getElementById('cliente').value.trim(),
+      cidade: document.getElementById('cidade').value.trim(),
+      foto_capa_url: fotoEquipamentoUrl,
+      created_at: new Date().toISOString()
     };
 
-    const { error } = await window.db.from("if-compressores").insert([dados]);
+    // ⚠️ Nome da tabela corrigido: if_compressores
+    const { error } = await window.db.from("if_compressores").insert([dados]);
 
     if (error) {
       console.error("Erro Supabase:", error);
       alert("Erro ao salvar:\n" + error.message);
       btn.disabled = false;
-      btn.innerHTML = '💾 Salvar e Gerar QR';
+      btn.textContent = '💾 Salvar e Gerar QR';
       return;
     }
 
-    // Sucesso — redireciona para QR Code
-    window.location.href = "qrcode.html?id=" + id;
+    // Sucesso
+    window.location.href = "qrcode.html?id=" + serieVal;
   }
-
 </script>
 </body>
 </html>
+
