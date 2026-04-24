@@ -1,8 +1,10 @@
 const SUPABASE_URL = "https://sjaqdhchefiwcmswyrit.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+// ⚠️ Certifique-se de usar a chave ANON correta do painel Supabase (Settings → API → Project API keys → anon)
+const SUPABASE_ANON_KEY = "COLE_AQUI_SUA_ANON_KEY_REAL";
 const BUCKET_PADRAO = "if-manutencoes";
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Inicializa o cliente Supabase
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 window.db = db;
 
 // Upload da imagem e retorno da URL pública
@@ -12,6 +14,7 @@ async function uploadImagemEquipamento(file) {
   const timestamp = Date.now();
   const nomeArquivo = `equipamentos/${timestamp}_${file.name}`;
 
+  // Faz upload para o bucket
   const { data, error } = await db.storage
     .from(BUCKET_PADRAO)
     .upload(nomeArquivo, file);
@@ -21,6 +24,7 @@ async function uploadImagemEquipamento(file) {
     return null;
   }
 
+  // Gera URL pública
   const { data: urlData } = db.storage
     .from(BUCKET_PADRAO)
     .getPublicUrl(nomeArquivo);
