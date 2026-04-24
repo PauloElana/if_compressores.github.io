@@ -1,7 +1,7 @@
 const SUPABASE_URL = "https://sjaqdhchefiwcmswyrit.supabase.co";
 // ⚠️ Certifique-se de usar a chave ANON correta do painel Supabase (Settings → API → Project API keys → anon)
-const SUPABASE_ANON_KEY = "COLE_AQUI_SUA_ANON_KEY_REAL";
-const BUCKET_PADRAO = "if-manutencoes";
+const SUPABASE_ANON_KEY = "sb_publishable_sS0G0QoH5bvuwqxMUZrP3w_fkUCfbqE";
+const BUCKET_PADRAO = "if_manutencoes";
 
 // Inicializa o cliente Supabase
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
