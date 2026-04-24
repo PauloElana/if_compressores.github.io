@@ -1,13 +1,16 @@
+// Configuração do Supabase
 const SUPABASE_URL = "https://sjaqdhchefiwcmswyrit.supabase.co";
-// ⚠️ Certifique-se de usar a chave ANON correta do painel Supabase (Settings → API → Project API keys → anon)
-const SUPABASE_ANON_KEY = "sb_publishable_sS0G0QoH5bvuwqxMUZrP3w_fkUCfbqE";
-const BUCKET_PADRAO = "if_manutencoes";
+
+// ⚠️ Use a chave ANON PUBLIC do painel Supabase (Settings → API → Project API keys → anon public)
+// Essa é a chave que você colou anteriormente (eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...)
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+const BUCKET_PADRAO = "if-manutencoes"; // nome do bucket exatamente como está no painel
 
 // Inicializa o cliente Supabase
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 window.db = db;
 
-// Upload da imagem e retorno da URL pública
+// Função para upload da imagem e retorno da URL pública
 async function uploadImagemEquipamento(file) {
   if (!file) return null;
 

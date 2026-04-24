@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IF Compressores — Cadastrar Equipamento</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="dashboard.html">
+      <div class="logo-icon"><img src="logo.png" alt="IF Compressores"></div>
+      <div class="logo-text">
+        <span class="logo-name">IF Compressores</span>
+        <span class="logo-sub">Sistema de Gestão</span>
+      </div>
+    </a>
+    <span class="header-title">Cadastrar Equipamento</span>
+    <div class="nav-actions">
+      <a class="btn-nav home" href="dashboard.html">🏠 <span>Início</span></a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="page-title">Novo <span>Equipamento</span></div>
+  <div class="page-subtitle">Preencha os dados do compressor</div>
+
+  <!-- Identificação -->
+  <div class="card">
+    <div class="card-title">Identificação</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Tipo</label><input id="tipo"></div>
+      <div class="form-group"><label>Marca</label><input id="marca"></div>
+      <div class="form-group"><label>Modelo</label><input id="modelo"></div>
+      <div class="form-group">
+        <label>Número de Série <span style="color:red;font-size:10px;">★ IDENTIFICADOR</span></label>
+        <input id="serie" style="border-color:red;">
+      </div>
+    </div>
+  </div>
+
+  <!-- Especificações -->
+  <div class="card">
+    <div class="card-title">Especificações Técnicas</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Potência</label><input id="potencia"></div>
+      <div class="form-group"><label>Pressão</label><input id="pressao"></div>
+      <div class="form-group"><label>Vazão</label><input id="vazao"></div>
+      <div class="form-group"><label>Tensão</label><input id="tensao"></div>
+      <div class="form-group"><label>Horímetro</label><input id="horimetro" type="number"></div>
+    </div>
+  </div>
+
+  <!-- Localização -->
+  <div class="card">
+    <div class="card-title">Localização</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Cliente</label><input id="cliente"></div>
+      <div class="form-group"><label>Cidade</label><input id="cidade"></div>
+    </div>
+  </div>
+
+  <!-- Foto -->
+  <div class="card">
+    <div class="card-title">🖼️ Foto de Identificação</div>
+    <div class="form-group full">
+      <input type="file" id="foto-equipamento" accept="image/*" onchange="previewFotoEquipamento(event)">
+      <div id="foto-equipamento-preview" class="cover-preview">
+        <div class="cover-upload-placeholder">
+          <span style="font-size: 2em;">📷</span>
+          <p>Clique ou arraste uma foto aqui</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botões -->
+  <div class="btn-actions">
+    <button class="btn btn-ghost" onclick="limpar()">🗑️ Limpar</button>
+    <button class="btn btn-secondary" onclick="history.back()">← Voltar</button>
+    <button class="btn btn-primary" id="btn-salvar" onclick="salvar()">💾 Salvar e Gerar QR</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+  function limpar() {
+    ['tipo','marca','modelo','serie','potencia','pressao','vazao','tensao','horimetro','cliente','cidade']
+      .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('foto-equipamento').value = '';
+    document.getElementById('foto-equipamento-preview').innerHTML = `
+      <div class="cover-upload-placeholder">
+        <span style="font-size: 2em;">📷</span>
+        <p>Clique ou arraste uma foto aqui</p>
+      </div>
+    `;
+  }
+
+  function previewFotoEquipamento(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('foto-equipamento-preview').innerHTML = `
+        <img src="${e.target.result}" style="max-width:100%;max-height:300px;border-radius:8px;">
+      `;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function salvar() {
+    const btn = document.getElementById('btn-salvar');
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+
+    const tipo   = document.getElementById('tipo').value.trim();
+    const marca  = document.getElementById('marca').value.trim();
+    const modelo = document.getElementById('modelo').value.trim();
+    const serieVal = document.getElementById('serie').value.trim();
+
+    if (!tipo || !marca || !modelo || !serieVal) {
+      alert("Preencha Tipo, Marca, Modelo e Série.");
+      btn.disabled = false;
+      btn.textContent = '💾 Salvar e Gerar QR';
+      return;
+    }
+
+    let fotoEquipamentoUrl = null;
+    const fotoEquipamentoFile = document.getElementById('foto-equipamento').files[0];
+    if (fotoEquipamentoFile) {
+      fotoEquipamentoUrl = await uploadImagemEquipamento(fotoEquipamentoFile);
+    }
+
+    const dados = {
+      id: serieVal,
+      tipo, marca, modelo, serie: serieVal,
+      potencia: document.getElementById('potencia').value.trim(),
+      pressao: document.getElementById('pressao').value.trim(),
+      vazao: document.getElementById('vazao').value.trim(),
+      tensao: document.getElementById('tensao').value.trim(),
+      horimetro: parseFloat(document.getElementById('horimetro').value) || 0,
+      cliente: document.getElementById('cliente').value.trim(),
+      cidade: document.getElementById('cidade').value.trim(),
+      foto_capa_url: fotoEquipamentoUrl,
+      created_at: new Date().toISOString()
+    };
+
+    const { error } = await window.db.from("if_compressores").insert([dados]);
+    if (error) {
+      console.error("Erro Supabase:", error);
+      alert("Erro ao salvar:\n" + error.message);
+      btn.disabled = false;
+      btn.textContent = '💾 Salvar e Gerar QR';
+      return;
+    }
+
+    window.location.href = "qrcode.html?id=" + serieVal;
+  }
+</script>
+</body>
+</html>
+

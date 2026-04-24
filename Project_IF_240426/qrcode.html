@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IF Compressores — QR Code</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="dashboard.html">
+      <div class="logo-icon"><img src="logo.png" alt="IF Compressores"></div>
+      <div class="logo-text">
+        <span class="logo-name">IF Compressores</span>
+        <span class="logo-sub">Sistema de Gestão</span>
+      </div>
+    </a>
+    <span class="header-title">QR Code do Equipamento</span>
+    <div class="nav-actions">
+      <a class="btn-nav home" href="dashboard.html">🏠 <span>Início</span></a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="page-title">QR Code <span>Gerado</span></div>
+  <div class="page-subtitle">Use este QR para identificar o compressor</div>
+
+  <div class="card">
+    <div class="card-title">Equipamento</div>
+    <div id="equipamento-info" class="form-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📲 QR Code</div>
+    <div id="qrcode" style="text-align:center; padding:20px;"></div>
+  </div>
+
+  <div class="btn-actions">
+    <button class="btn btn-secondary" onclick="history.back()">← Voltar</button>
+    <a class="btn btn-primary" href="dashboard.html">🏠 Início</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+  async function carregarEquipamento() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    if (!id) {
+      document.getElementById("equipamento-info").innerHTML = "<p>❌ Nenhum equipamento informado.</p>";
+      return;
+    }
+
+    // Busca os dados do equipamento
+    const { data, error } = await window.db.from("if_compressores").select("*").eq("id", id).single();
+    if (error || !data) {
+      document.getElementById("equipamento-info").innerHTML = "<p>❌ Equipamento não encontrado.</p>";
+      return;
+    }
+
+    // Exibe informações básicas
+    document.getElementById("equipamento-info").innerHTML = `
+      <div><strong>Tipo:</strong> ${data.tipo}</div>
+      <div><strong>Marca:</strong> ${data.marca}</div>
+      <div><strong>Modelo:</strong> ${data.modelo}</div>
+      <div><strong>Série:</strong> ${data.serie}</div>
+      ${data.foto_capa_url ? `<div><img src="${data.foto_capa_url}" style="max-width:200px;border-radius:8px;"></div>` : ""}
+    `;
+
+    // Gera QR Code apontando para visualizacao.html
+    const url = window.location.origin + "/visualizacao.html?id=" + id;
+    QRCode.toCanvas(document.getElementById("qrcode"), url, { width: 250 }, function (err) {
+      if (err) console.error(err);
+    });
+  }
+
+  carregarEquipamento();
+</script>
+</body>
+</html>
